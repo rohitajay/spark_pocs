@@ -1,0 +1,6 @@
+
+
+1. https://docs.nubeera.com/courses/bigdata/spark/py_spark/pyspark-json-functions-with-examples.php#schema_of_json
+
+2. https://stackoverflow.com/questions/53477724/pyspark-how-to-create-a-nested-json-from-spark-data-frame
+

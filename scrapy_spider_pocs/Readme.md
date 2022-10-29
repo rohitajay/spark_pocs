@@ -1,0 +1,1 @@
+1. https://github.com/dfdeshom/scrapy-kafka/tree/a1e401f8dc96c67801d80d3da612db60b6f1fc80
