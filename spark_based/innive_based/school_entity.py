@@ -37,8 +37,6 @@ def create_dfs(dir_path):
 def unionAll(dir_path, primary_key):
     from functools import reduce
     dfs = create_dfs(dir_path=dir_path)
-    # print(dfs)
-    # new_data = dfs.reduce(lambda df1, df2: df1.join(df2, on = list(primary_key)))
     new_data = reduce(lambda df1,df2: df1.join(df2, primary_key, how='outer'), dfs)
     return new_data
 
