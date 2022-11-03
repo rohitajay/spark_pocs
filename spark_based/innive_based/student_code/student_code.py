@@ -6,6 +6,11 @@ from pyspark.sql.types import StringType, StructType, StructField, BooleanType, 
 from pyspark.sql import SparkSession
 import json
 from json import JSONDecodeError
+from time import time
+
+start = time()
+# dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/sample/Student/"
+dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/from_customer/innive_data/student/"
 
 def sparkSessionBuilder():
     spark = SparkSession.builder.master("local").appName("test").getOrCreate()
@@ -17,7 +22,7 @@ def spark_dataframe(path):
     return df
 
 
-dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/sample/Student/"
+
 
 if __name__ == "__main__":
 
@@ -84,7 +89,7 @@ if __name__ == "__main__":
 
         dfs = [df_base, df_visa, df_pid, df_otherNames ]
         df_student = unionAll(dfs=dfs, primary_key = primary_key)
-        df_student.show(truncate= False)
+        # df_student.show(truncate= False)
         df_student = df_student.select("studentUniqueId", "Operation",
                                      to_json(
                                          struct(
@@ -97,7 +102,12 @@ if __name__ == "__main__":
     # df.show(truncate=False)
 
     df_student = get_joined_data()
+    print(df_student.count())
     df_student.show(truncate= False)
 
+    end = time()
+
+    total = end - start
+    print(total)
     # a = transform_student_IdDocs(filepath = "Student_identificationDocuments.csv")
     # print(a.show(truncate=False))

@@ -6,6 +6,9 @@ from pyspark.sql.types import StringType, StructType, StructField, BooleanType, 
 from pyspark.sql import SparkSession
 import json
 from json import JSONDecodeError
+from time import time
+
+start = time()
 
 def sparkSessionBuilder():
     spark = SparkSession.builder.master("local").appName("test").getOrCreate()
@@ -14,6 +17,7 @@ def sparkSessionBuilder():
 def spark_dataframe(path):
     spark = sparkSessionBuilder()
     df = spark.read.format('csv').options(Header=True).option('inferSchema','True').load(path)
+    df.repartition(5)
     return df
 
 def recurse(d):
@@ -49,7 +53,8 @@ def remove_empty_elements(d):
 
 
 
-dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/sample/School/"
+# dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/sample/School/"
+dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/from_customer/innive_data/school/"
 
 if __name__ == "__main__":
     abc = "schoolYearTypeReference_schoolYear"
@@ -150,10 +155,17 @@ if __name__ == "__main__":
 
 
     df_school = get_joined_data()
+    print(df_school.count())
     df_school.show(truncate=False)
+
+    end = time()
+    total = end - start
+    print(total)
 
 
     from pprint import pprint
     col_payload = df_school.select(df_school.payload).collect()
     list1 = [i[0] for i in col_payload][0]
     pprint(remove_empty_elements(recurse(list1)))
+
+

@@ -6,25 +6,33 @@ from pyspark.sql.types import StringType, StructType, StructField, BooleanType, 
 from pyspark.sql import SparkSession
 import json
 from json import JSONDecodeError
+from time import time
+dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/from_customer/innive_data/ssa/"
 
+start = time()
 def sparkSessionBuilder():
-    spark = SparkSession.builder.master("local").appName("test").getOrCreate()
+    spark = SparkSession.builder.master("local[16]").appName("test")\
+        .config("spark.driver.bindAddress","localhost")\
+        .config("spark.ui.port","4050")\
+        .getOrCreate()
     return spark
 
 def spark_dataframe(path):
     spark = sparkSessionBuilder()
     df = spark.read.format('csv').options(Header=True).option('inferSchema','True').load(path)
+    df.coalesce(10)
     return df
 
 
-dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/sample/SSA/"
+# dir_path = "/home/rohitg/PycharmProjects/spark_pocs/spark_based/innive_based/Data/sample/SSA/"
 
 if __name__ == "__main__":
 
+    spark = sparkSessionBuilder()
     def transform_ssa_base(filepath= "SSA_Base.csv"):
         df_base = spark_dataframe(path=dir_path + filepath)
         df_base = df_base\
-            .withColumn("schoolReference", to_json(struct("schoolRef_schoolId")))\
+            .withColumn("schoolReference", to_json(struct("schoolId")))\
             .withColumn("studentReference",to_json(struct("studentUniqueId")))\
             .withColumn("calendarReference", to_json(struct("calendarCode", "calendarReference_schoolYear", "calendarReference_schoolId")))\
             .withColumn("graduationPlanReference", to_json(struct([str(c) for c in df_base.columns if c not in {'studentUniqueId','Operation'}])))
@@ -38,7 +46,7 @@ if __name__ == "__main__":
 
     def transform_ssa_eduPlans(filepath= "SSA_educationPlans.csv"):
         df_base = spark_dataframe(path=dir_path + filepath)
-        df_base = df_base.withColumn("educationPlans", to_json(struct("educationPlans_educationPlanDescriptor")))
+        df_base = df_base.withColumn("educationPlans", to_json(struct("educationPlanDescriptor")))
         return df_base
 
 
@@ -49,7 +57,7 @@ if __name__ == "__main__":
 
     def get_joined_data():
 
-        primary_key = ["studentUniqueId","Operation", "schoolRef_schoolId"]
+        primary_key = ["studentUniqueId","Operation", "schoolId"]
         df_ssaBase = transform_ssa_base(filepath="SSA_Base.csv")
         df_ssaAGPR = transform_ssa_agpr(filepath="SSA_alternateGraduationPlanReference.csv")
         df_ssaEduPlans = transform_ssa_eduPlans(filepath="SSA_educationPlans.csv")
@@ -57,18 +65,29 @@ if __name__ == "__main__":
 
         dfs = [df_ssaBase, df_ssaAGPR, df_ssaEduPlans]
         df_student = unionAll(dfs=dfs, primary_key = primary_key)
-        df_student.show(truncate= False)
+        # df_student.show(truncate= False)
         df_student = df_student.select("studentUniqueId", "Operation",
                                      to_json(
                                          struct(
                                              [str(c) for c in df_student.columns
-                                              if c not in {'Operation', 'studentUniqueId', 'schoolRef_schoolId' }])).alias("payload"))
+                                              if c not in {'Operation', 'studentUniqueId', 'schoolId' }])).alias("payload"))
         return df_student
 
     #
 
-    df_agpr = transform_ssa_agpr(filepath="SSA_alternateGraduationPlanReference.csv")
-    df_agpr.show(truncate=False)
+    # df_agpr = transform_ssa_agpr(filepath="SSA_alternateGraduationPlanReference.csv")
+    # df_agpr.show(truncate=False)
 
     df_student = get_joined_data()
-    df_student.show(truncate= False)
+
+    print(df_student.count())
+    df_student.show()
+
+    end = time()
+
+    total = end - start
+    print(total)
+
+    input("Press enter to terminate")
+
+    spark.stop()
